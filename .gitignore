@@ -129,3 +129,4 @@ ui-tests/playwright-report
 
 /dataset
 /.cache
+/pred.txt
