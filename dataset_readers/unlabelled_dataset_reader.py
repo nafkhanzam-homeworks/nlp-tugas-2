@@ -12,6 +12,6 @@ class UnlabelledDatasetReader():
             for line in f.read().splitlines():
                 if not len(line):
                     continue
-                series.append(line)
+                series.append(pd.Series(line), ignore_index=True)
 
         return series

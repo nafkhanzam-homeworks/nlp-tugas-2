@@ -29,14 +29,14 @@ class DatasetReader():
                 df.append({
                     'token': token,
                     'label': label,
-                })
+                }, ignore_index=True)
 
         if len(df) > 0:
             df_list.append(df)
 
         return df_list
 
-    def _init_df():
+    def _init_df(self):
         return pd.DataFrame(columns=['token', 'label'])
 
     def _is_valid_line(self, line: str) -> bool:

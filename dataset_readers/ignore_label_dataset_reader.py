@@ -21,7 +21,7 @@ class IgnoreLabelDatasetReader(DatasetReader):
                     series = pd.Series()
                     continue
                 token, _ = self._get_token_label(line)
-                series.append(token)
+                series.append(pd.Series(token), ignore_index=True)
 
         if len(series) > 0:
             series_list.append(series)

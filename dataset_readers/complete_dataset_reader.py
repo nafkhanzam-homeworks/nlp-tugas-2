@@ -7,19 +7,19 @@ class CompleteDatasetReader():
     def __init__(self, dataset_name: str):
         self.dataset_name = dataset_name
         self.test_dataset_reader = IgnoreLabelDatasetReader(
-            url=self._build_path("test_preprocess_masked_label"),
+            file_path=self._build_path("test_preprocess_masked_label"),
         )
         self.train_dataset_reader = DatasetReader(
-            url=self._build_path("train_preprocess"),
+            file_path=self._build_path("train_preprocess"),
         )
         self.validation_dataset_reader = DatasetReader(
-            url=self._build_path("valid_preprocess"),
+            file_path=self._build_path("valid_preprocess"),
         )
         self.vocab_uncased_dataset_reader = UnlabelledDatasetReader(
-            url=self._build_path("vocab_uncased"),
+            file_path=self._build_path("vocab_uncased"),
         )
         self.vocab_dataset_reader = UnlabelledDatasetReader(
-            url=self._build_path("vocab"),
+            file_path=self._build_path("vocab"),
         )
 
     def read_test_series(self):
