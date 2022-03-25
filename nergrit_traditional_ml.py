@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from sklearn.naive_bayes import BernoulliNB
+from sklearn.naive_bayes import BernoulliNB, CategoricalNB, GaussianNB, MultinomialNB
 
 from cache_decorator import build_cache_decorator
 from nergrit_framework import NergritFramework
@@ -18,17 +18,17 @@ class NergritTraditionalML(NergritFramework):
         self.test_sentence_series = self._build_test_sentence_series()
         self.uncased_vocab_series = self._build_uncased_vocab_series()
 
-    @cache('bnbc_model')
-    def build_naive_bayes_model(self) -> BernoulliNB:
+    @cache('nb_model')
+    def build_naive_bayes_model(self) -> GaussianNB:
         X_train = self.build_X_train()
-        y_train = self.train_df['label']
+        y_train = self.get_y_train()
 
-        bnbc = BernoulliNB(binarize=None)
-        bnbc.fit(X_train, y_train)
+        model = GaussianNB()
+        model.fit(X_train, y_train)
 
-        return bnbc
+        return model
 
-    @cache('bnbc_X_train')
+    @cache('nb_X_train')
     def build_X_train(self) -> pd.DataFrame:
         return self._build_one_hot_encoded_dataset(
             self.train_df
@@ -37,7 +37,7 @@ class NergritTraditionalML(NergritFramework):
     def get_y_train(self):
         return self.train_df['label']
 
-    @cache('bnbc_X_validation')
+    @cache('nb_X_validation')
     def build_X_validation(self) -> pd.DataFrame:
         return self._build_one_hot_encoded_dataset(
             self.validation_df
@@ -46,7 +46,7 @@ class NergritTraditionalML(NergritFramework):
     def get_y_validation(self):
         return self.validation_df['label']
 
-    @cache('bnbc_X_test')
+    @cache('nb_X_test')
     def build_X_test(self) -> pd.DataFrame:
         return self._build_one_hot_encoded_dataset(
             self.test_series.to_frame('token')
