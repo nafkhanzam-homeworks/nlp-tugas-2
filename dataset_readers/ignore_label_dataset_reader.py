@@ -16,11 +16,12 @@ class IgnoreLabelDatasetReader(DatasetReader):
 
         with open(self.file_path, "r") as f:
             for line in f.read().splitlines():
-                if not len(line):
+                if not self._is_valid_line(line):
                     series_list.append(series)
                     series = pd.Series()
                     continue
-                series.append(line)
+                token, _ = self._get_token_label(line)
+                series.append(token)
 
         if len(series) > 0:
             series_list.append(series)

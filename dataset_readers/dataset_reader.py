@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import pandas as pd
 
 
@@ -21,11 +21,11 @@ class DatasetReader():
 
         with open(self.file_path, "r") as f:
             for line in f.read().splitlines():
-                if not (self.sep in line):
+                if not self._is_valid_line(line):
                     df_list.append(df)
                     df = self._init_df()
                     continue
-                token, label = line.split(self.sep)
+                token, label = self._get_token_label(line)
                 df.append({
                     'token': token,
                     'label': label,
@@ -38,3 +38,10 @@ class DatasetReader():
 
     def _init_df():
         return pd.DataFrame(columns=['token', 'label'])
+
+    def _is_valid_line(self, line: str) -> bool:
+        return self.sep in line
+
+    def _get_token_label(self, line: str) -> Tuple[str, str]:
+        token, label = line.split(self.sep)
+        return token, label
