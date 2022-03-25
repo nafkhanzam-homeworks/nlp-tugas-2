@@ -1,59 +1,95 @@
 from typing import List, Tuple
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 
 import pandas as pd
-from cached import cached
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.naive_bayes import BernoulliNB
 
+from cache_decorator import build_cache_decorator
 from nergrit_framework import NergritFramework
+
+cache = build_cache_decorator('nergrit')
 
 
 class NergritTraditionalML(NergritFramework):
-    def __init__(self):
-        super().__init__()
+    def init_data(self):
         self.train_df = self._build_train_df()
         self.validation_df = self._build_validation_df()
         self.test_series = self._build_test_series()
         self.test_sentence_series = self._build_test_sentence_series()
         self.uncased_vocab_series = self._build_uncased_vocab_series()
 
-    def build_naive_bayes_model(self) -> Tuple[pd.DataFrame, pd.Series]:
-        preprocessed_train_df = \
-            self._build_one_hot_encoded_dataframe(self.train_df)
-        return preprocessed_train_df
+    @cache('bnbc_model')
+    def build_naive_bayes_model(self) -> BernoulliNB:
+        X_train = self.build_X_train()
+        y_train = self.train_df['label']
 
-    @cached('nergrit_train_df.pkl')
+        bnbc = BernoulliNB(binarize=None)
+        bnbc.fit(X_train, y_train)
+
+        return bnbc
+
+    @cache('bnbc_X_train')
+    def build_X_train(self) -> pd.DataFrame:
+        return self._build_one_hot_encoded_dataset(
+            self.train_df
+        )
+
+    def get_y_train(self):
+        return self.train_df['label']
+
+    @cache('bnbc_X_validation')
+    def build_X_validation(self) -> pd.DataFrame:
+        return self._build_one_hot_encoded_dataset(
+            self.validation_df
+        )
+
+    def get_y_validation(self):
+        return self.validation_df['label']
+
+    @cache('bnbc_X_test')
+    def build_X_test(self) -> pd.DataFrame:
+        return self._build_one_hot_encoded_dataset(
+            self.test_series.to_frame('token')
+        )
+
+    @cache('train_df')
     def _build_train_df(self):
         return self.readers.read_train_dataframe()
 
-    @cached('nergrit_validation_df.pkl')
+    @cache('validation_df')
     def _build_validation_df(self):
         return self.readers.read_validation_dataframe()
 
-    @cached('nergrit_test_series.pkl')
+    @cache('test_series')
     def _build_test_series(self):
         return self.readers.read_test_series()
 
-    @cached('nergrit_test_sentence_series.pkl')
+    @cache('test_sentence_series')
     def _build_test_sentence_series(self):
         return self.readers.read_test_sentence_series()
 
-    @cached('nergrit_uncased_vocab_series.pkl')
+    @cache('uncased_vocab_series')
     def _build_uncased_vocab_series(self):
         return self.readers.read_vocab_uncased_series()
 
-    def _build_one_hot_encoded_dataframe(self, origin_df: pd.DataFrame) -> pd.DataFrame:
-        if not 'token' in origin_df.columns:
+    def _build_one_hot_encoded_dataset(self, df: pd.DataFrame) -> pd.DataFrame:
+        if not 'token' in df.columns:
             raise Exception('DataFrame does not have token column!')
 
-        df = origin_df.copy()
+        tf_vectorizer = self._build_tf_vectorizer()
 
+        token_list = df['token'].apply(lambda x: x.lower())
+
+        X_train = pd.DataFrame(
+            tf_vectorizer.transform(token_list).toarray(),
+            columns=tf_vectorizer.get_feature_names(),
+        )
+
+        return X_train
+
+    @cache('tf_vectorizer')
+    def _build_tf_vectorizer(self):
         tf_vectorizer = CountVectorizer()
         tf_vectorizer.fit(self.uncased_vocab_series)
 
-        X_train = pd.DataFrame(
-            tf_vectorizer.transform(df['token']).toarray(),
-            columns=tf_vectorizer.get_feature_names(),
-        )
-        y_train = df['label']
-
-        return X_train, y_train
+        return tf_vectorizer

@@ -1,4 +1,5 @@
 from typing import List, Tuple
+import numpy as np
 import pandas as pd
 
 
@@ -11,28 +12,33 @@ class DatasetReader():
         df = self._init_df()
 
         for next_df in self.read_to_sentence_dataframe_list():
-            df.merge(next_df)
+            df = df.append(next_df)
 
         return df
 
     def read_to_sentence_dataframe_list(self) -> List[pd.DataFrame]:
         df_list: List[pd.DataFrame] = []
-        df = self._init_df()
+        rows = []
 
         with open(self.file_path, "r") as f:
-            for line in f.read().splitlines():
+            for line in f.readlines():
+                line = line[:-1]
                 if not self._is_valid_line(line):
-                    df_list.append(df)
-                    df = self._init_df()
+                    df_list.append(
+                        pd.DataFrame(rows, columns=['token', 'label'])
+                    )
+                    rows = []
                     continue
                 token, label = self._get_token_label(line)
-                df.append({
+                rows.append({
                     'token': token,
                     'label': label,
-                }, ignore_index=True)
+                })
 
-        if len(df) > 0:
-            df_list.append(df)
+        if len(rows) > 0:
+            df_list.append(
+                pd.DataFrame(rows, columns=['token', 'label'])
+            )
 
         return df_list
 

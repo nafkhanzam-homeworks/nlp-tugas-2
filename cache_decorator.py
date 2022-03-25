@@ -2,11 +2,11 @@ import os
 import pickle
 
 
-def cached(cachefile):
+def cache(cachefile: str):
     """
     A function that creates a decorator which will use "cachefile" for caching the results of the decorated function "fn".
     """
-    cachefile = f".cache/{cachefile}"
+    cachefile = f".cache/{cachefile}.pkl"
 
     def decorator(fn):  # define a decorator for a function "fn"
         # define a wrapper that will finally call "fn" with all arguments
@@ -25,10 +25,20 @@ def cached(cachefile):
             # write to cache file
             with open(cachefile, 'wb') as cachehandle:
                 print("saving result to cache '%s'" % cachefile)
-                pickle.dump(res, cachehandle)
+                if hasattr(res, 'to_pickle'):
+                    res.to_pickle(cachefile)
+                else:
+                    pickle.dump(res, cachehandle)
 
             return res
 
         return wrapped
 
     return decorator   # return this "customized" decorator that uses "cachefile"
+
+
+def build_cache_decorator(prefix: str):
+    def cache_wrapper(cachefile: str):
+        return cache(f"{prefix}:{cachefile}")
+
+    return cache_wrapper

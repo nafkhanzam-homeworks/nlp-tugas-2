@@ -1,4 +1,5 @@
 from typing import List
+import numpy as np
 
 import pandas as pd
 
@@ -12,18 +13,23 @@ class IgnoreLabelDatasetReader(DatasetReader):
 
     def read_to_sentence_series(self) -> List[pd.Series]:
         series_list: List[pd.Series] = []
-        series = pd.Series()
+        rows = []
 
         with open(self.file_path, "r") as f:
-            for line in f.read().splitlines():
+            for line in f.readlines():
+                line = line[:-1]
                 if not self._is_valid_line(line):
-                    series_list.append(series)
-                    series = pd.Series()
+                    series_list.append(
+                        pd.Series(rows)
+                    )
+                    rows = []
                     continue
                 token, _ = self._get_token_label(line)
-                series.append(pd.Series(token), ignore_index=True)
+                rows.append(token)
 
-        if len(series) > 0:
-            series_list.append(series)
+        if len(rows) > 0:
+            series_list.append(
+                pd.Series(rows)
+            )
 
-        return series
+        return series_list

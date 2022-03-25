@@ -6,12 +6,13 @@ class UnlabelledDatasetReader():
         self.file_path = file_path
 
     def read_to_series(self) -> pd.Series:
-        series = pd.Series()
+        arr = []
 
         with open(self.file_path, "r") as f:
-            for line in f.read().splitlines():
+            for line in f.readlines():
+                line = line[:-1]
                 if not len(line):
                     continue
-                series.append(pd.Series(line), ignore_index=True)
+                arr.append(line)
 
-        return series
+        return pd.Series(arr)
