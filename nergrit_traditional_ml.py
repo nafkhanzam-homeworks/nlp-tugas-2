@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Iterator, List, Tuple
 
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
@@ -11,6 +11,8 @@ cache = build_cache_decorator('nergrit')
 
 
 class NergritTraditionalML(NergritFramework):
+    _tf_vectorizer = None
+
     def init_data(self):
         self.train_df = self._build_train_df()
         self.validation_df = self._build_validation_df()
@@ -28,14 +30,26 @@ class NergritTraditionalML(NergritFramework):
 
         return model
 
-    @cache('nb_X_train')
-    def build_X_train(self) -> pd.DataFrame:
-        return self._build_one_hot_encoded_dataset(
-            self.train_df
+    def test_naive_bayes_model(self, tokens: List[str]) -> List[str]:
+        model = self.build_naive_bayes_model()
+        return model.predict(
+            self._build_one_hot_encoded_dataset(
+                pd.DataFrame(tokens, columns=['token'])
+            )
         )
 
+    @cache('nb_X_train')
+    def build_X_train(self) -> pd.DataFrame:
+        X_train = self._build_one_hot_encoded_dataset(
+            self.train_df
+        )
+        X_train.loc[len(X_train)] = [0] * len(X_train.columns)
+        return X_train
+
     def get_y_train(self):
-        return self.train_df['label']
+        y_train = self.train_df['label']
+        y_train = y_train.append(pd.Series('O'), ignore_index=True)
+        return y_train
 
     @cache('nb_X_validation')
     def build_X_validation(self) -> pd.DataFrame:
@@ -51,6 +65,12 @@ class NergritTraditionalML(NergritFramework):
         return self._build_one_hot_encoded_dataset(
             self.test_series.to_frame('token')
         )
+
+    def build_X_sentences_test_iter(self) -> Iterator[pd.DataFrame]:
+        for sentence_series in self.test_sentence_series:
+            yield self._build_one_hot_encoded_dataset(
+                sentence_series.to_frame('token')
+            )
 
     @cache('train_df')
     def _build_train_df(self):
@@ -87,9 +107,11 @@ class NergritTraditionalML(NergritFramework):
 
         return X_train
 
-    @cache('tf_vectorizer')
     def _build_tf_vectorizer(self):
-        tf_vectorizer = CountVectorizer()
-        tf_vectorizer.fit(self.uncased_vocab_series)
+        if self._tf_vectorizer:
+            return self._tf_vectorizer
 
-        return tf_vectorizer
+        self._tf_vectorizer = CountVectorizer()
+        self._tf_vectorizer.fit(self.train_df['token'])
+
+        return self._tf_vectorizer

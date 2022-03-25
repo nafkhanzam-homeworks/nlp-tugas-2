@@ -26,7 +26,7 @@ class CompleteDatasetReader():
         return self.test_dataset_reader.read_to_token_series()
 
     def read_test_sentence_series(self):
-        return self.test_dataset_reader.read_to_token_series()
+        return self.test_dataset_reader.read_to_sentence_series()
 
     def read_train_dataframe(self):
         return self.train_dataset_reader.read_to_token_dataframe()
