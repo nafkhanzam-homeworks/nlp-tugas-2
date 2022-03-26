@@ -65,26 +65,6 @@ class NergritTraditionalML(NergritFramework):
                 sentence_series.to_frame('token')
             )
 
-    @cache('train_df')
-    def _build_train_df(self):
-        return self.readers.read_train_dataframe()
-
-    @cache('validation_df')
-    def _build_validation_df(self):
-        return self.readers.read_validation_dataframe()
-
-    @cache('test_series')
-    def _build_test_series(self):
-        return self.readers.read_test_series()
-
-    @cache('test_sentence_series')
-    def _build_test_sentence_series(self):
-        return self.readers.read_test_sentence_series()
-
-    @cache('uncased_vocab_series')
-    def _build_uncased_vocab_series(self):
-        return self.readers.read_vocab_uncased_series()
-
     def _build_one_hot_encoded_dataset(self, df: pd.DataFrame) -> pd.DataFrame:
         if not 'token' in df.columns:
             raise Exception('DataFrame does not have token column!')
