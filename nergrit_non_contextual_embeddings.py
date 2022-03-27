@@ -11,13 +11,9 @@ cache = build_cache_decorator('nergrit-non-contextual-embeddings')
 
 
 class NergritNonContextualEmbeddings(NergritFramework):
-    _le = None
-
     @cache('word2vec_model')
     def build_word2vec_model(self):
-        words = \
-            self.uncased_vocab_series.astype(str).to_list() \
-            + self.train_df['token'].astype(str).to_list()
+        words = self.get_words()
         model = gensim.models.Word2Vec(
             sentences=[words],
             min_count=1,
@@ -34,6 +30,13 @@ class NergritNonContextualEmbeddings(NergritFramework):
     def build_Xy_validation(self, model):
         return self._build_Xy(model, self.validation_df, self.build_validation_tags())
 
+    @cache('word2vec_test')
+    def build_X_test(self, model):
+        X = []
+        for word in self.test_series:
+            X.append(model.wv[word])
+        return X
+
     def _create_train_sentence_iter(self) -> Iterable[str]:
         df_list = self.readers.train_dataset_reader.read_to_sentence_dataframe_list()
         for df in df_list:
@@ -43,7 +46,7 @@ class NergritNonContextualEmbeddings(NergritFramework):
         X_train = []
         for word in df['token']:
             X_train.append(model.wv[word])
-        le = self.get_tags_label_encoder()
+        le = preprocessing.LabelEncoder()
         y_train = le.fit_transform(tags)
 
         return X_train, y_train
@@ -56,7 +59,14 @@ class NergritNonContextualEmbeddings(NergritFramework):
     def build_validation_tags(self) -> List[str]:
         return self.validation_df['label'].astype(str).to_list()
 
-    def get_tags_label_encoder(self):
-        le = self._le or preprocessing.LabelEncoder()
-        self._le = le
-        return le
+    @cache('vocab_words')
+    def get_words(self):
+        return self.uncased_vocab_series.astype(str).to_list() \
+            + self.train_df['token'].astype(str).to_list()
+
+    def build_X_sentences_test_iter(self, model) -> Iterator[pd.DataFrame]:
+        for sentence_series in self.test_sentence_series:
+            X = []
+            for word in sentence_series:
+                X.append(model.wv[word])
+            yield X

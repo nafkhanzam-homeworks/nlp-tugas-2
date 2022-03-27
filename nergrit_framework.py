@@ -38,7 +38,8 @@ class NergritFramework():
     @cache('test_sentence_series')
     def _build_test_sentence_series(self):
         res = self.readers.read_test_sentence_series()
-        # res = res.apply(self.convert_case)
+        for i in range(len(res)):
+            res[i] = res[i].apply(self.convert_case)
         return res
 
     @cache('uncased_vocab_series')
