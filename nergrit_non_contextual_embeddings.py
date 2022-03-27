@@ -1,5 +1,6 @@
 from typing import Iterable, Iterator, List, Tuple
 from sklearn import preprocessing
+from imblearn.over_sampling import SMOTE
 
 import pandas as pd
 import gensim
@@ -24,11 +25,15 @@ class NergritNonContextualEmbeddings(NergritFramework):
 
     @cache('word2vec_train')
     def build_Xy_train(self, model):
-        return self._build_Xy(model, self.train_df, self.build_train_tags())
+        X, y = self._build_Xy(model, self.train_df,
+                              self.build_tags(self.train_df))
+        oversample = SMOTE()
+        X, y = oversample.fit_resample(X, y)
+        return X, y
 
     @cache('word2vec_validation')
     def build_Xy_validation(self, model):
-        return self._build_Xy(model, self.validation_df, self.build_validation_tags())
+        return self._build_Xy(model, self.validation_df, self.build_tags(self.validation_df))
 
     @cache('word2vec_test')
     def build_X_test(self, model):
@@ -36,6 +41,11 @@ class NergritNonContextualEmbeddings(NergritFramework):
         for word in self.test_series:
             X.append(model.wv[word])
         return X
+
+    def build_label_encoder(self):
+        le = preprocessing.LabelEncoder()
+        le.fit(list(set(self.build_tags(self.train_df))))
+        return le
 
     def _create_train_sentence_iter(self) -> Iterable[str]:
         df_list = self.readers.train_dataset_reader.read_to_sentence_dataframe_list()
@@ -51,13 +61,8 @@ class NergritNonContextualEmbeddings(NergritFramework):
 
         return X_train, y_train
 
-    @cache('train_tags')
-    def build_train_tags(self) -> List[str]:
-        return self.train_df['label'].astype(str).to_list()
-
-    @cache('validation_tags')
-    def build_validation_tags(self) -> List[str]:
-        return self.validation_df['label'].astype(str).to_list()
+    def build_tags(self, df) -> List[str]:
+        return df['label'].astype(str).to_list()
 
     @cache('vocab_words')
     def get_words(self):

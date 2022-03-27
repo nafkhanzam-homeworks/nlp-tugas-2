@@ -131,4 +131,4 @@ ui-tests/playwright-report
 /.cache
 /pred.txt
 /pred.txt.zip
-/*.model
+/*.model*
