@@ -132,3 +132,4 @@ ui-tests/playwright-report
 /pred.txt
 /pred.txt.zip
 /*.model*
+/result
